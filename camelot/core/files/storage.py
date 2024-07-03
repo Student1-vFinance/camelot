@@ -33,6 +33,7 @@ import os
 import shutil
 import tempfile
 from io import IOBase
+from hashlib import sha1
 from pathlib import Path, PurePosixPath
 from typing import Dict, BinaryIO
 
@@ -85,7 +86,7 @@ class Storage:
     script as well.
     """
 
-    def __init__(self, upload_to: PurePosixPath = ''):
+    def __init__(self, upload_to: PurePosixPath = None):
         """
         :param upload_to: the subdirectory in which to put files
         :param stored_file_implementation: the subclass of StoredFile to be used when
@@ -97,12 +98,18 @@ class Storage:
         The actual files will be put in root + upload to.  If None is given as root,
         the settings.CAMELOT_MEDIA_ROOT will be taken as the root directory.
         """
+        if upload_to is None:
+            upload_to = PurePosixPath('')
         assert isinstance(upload_to, PurePosixPath)
-        self.upload_to = PurePosixPath(settings.CAMELOT_MEDIA_ROOT).joinpath(upload_to)
+        self._upload_to = upload_to
         #
         # don't do anything here that might reduce the startup time, like verifying the
         # availability of the storage, since the path might be on a slow network share
         #
+
+    @property
+    def upload_to(self):
+        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT()).joinpath(self._upload_to)
 
     def available(self) -> bool:
         """
@@ -261,4 +268,28 @@ class Storage:
     def delete(self, name):
         pass
 
+
+class HashStorage(Storage):
+
+    def __init__(self, upload_to: PurePosixPath = None):
+        super().__init__(upload_to)
+        self.hash_folder: PurePosixPath = PurePosixPath('')
+
+    def _create_tempfile(self, suffix: str, prefix: str):
+        # @todo suffix and prefix should be cleaned, because the user might be
+        #       able to get directory separators in here or something related
+        """Create a temporary file in the storage directory
+
+        :param suffix: Suffix of the temporary file
+        :param prefix: Prefix of the temporary file
+        :return: File descriptor and file path of the temporary file
+        """
+        hexhash = sha1(prefix.encode('UTF-8')).hexdigest()
+        self.hash_folder = hexhash[:2]
+        self.available()
+        return super()._create_tempfile(suffix, hexhash)
+
+    @property
+    def upload_to(self):
+        return PurePosixPath(settings.CAMELOT_MEDIA_ROOT()).joinpath(self._upload_to, self.hash_folder)
 
