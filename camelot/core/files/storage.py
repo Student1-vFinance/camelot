@@ -274,6 +274,18 @@ class Storage:
 
 
 class HashStorage(Storage):
+    """
+    upload_to: origineel upload path?
+    available -> is het de bedoeling dat bij financial_documents bv, de fiche.pdf word geupload in media/financial_documents/hash(fiche.pdf)[:2]/hash(fiche.pdf)
+    of media/hash(financial_documents/fiche.pdf)[:2]/hash(financial_documents/fiche.pdf). in het eerste geval blijft available hetzelfde anders gaat het aangepast moeten worden
+
+    list_files -> is deze functie nog relevant in hash storage?
+
+    path/exists -> hashed path? word de hashed name meegegeven of de originele naam?
+
+
+
+    """
 
     def __init__(self, upload_to: PurePosixPath = None):
         super().__init__(upload_to)
