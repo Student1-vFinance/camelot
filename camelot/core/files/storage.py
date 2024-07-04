@@ -133,14 +133,13 @@ class Storage:
             return os.access(Path(self.upload_to), os.W_OK)
         return False
 
-    @staticmethod
-    def exists(name: PurePosixPath) -> bool:
+    def exists(self, name: PurePosixPath) -> bool:
         """Check if a file exists given its name
 
         :param name: Name of the file
         :return: True if the file exists, False otherwise
         """
-        return Path(name).exists()
+        return Path(self.path(name)).exists()
 
     def list_files(self, prefix='*', suffix='*'):
         """List all files with a given prefix and/or suffix available in this storage
